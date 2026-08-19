@@ -1,0 +1,26 @@
+# Environment files
+.env
+.env.*
+!.env.example
+!.env.docker.example
+
+# Dependencies
+node_modules/
+
+# Next.js
+.next/
+out/
+
+# Build / test output
+build/
+dist/
+coverage/
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+
+# OS / editor
+.DS_Store
+.vscode/

@@ -1,0 +1,190 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  COMPLETED
+  CANCELLED
+}
+
+enum FollowUpStatus {
+  NEW
+  ASSIGNED
+  CONTACTED
+  FOLLOW_UP
+  COMPLETED
+  CLOSED
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+}
+
+enum SubmissionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum TestimonyStatus {
+  PENDING
+  VERIFIED
+  APPROVED
+  REJECTED
+  PROJECTED
+}
+
+enum StaffRole {
+  ADMIN
+  MEDIA
+  FOLLOW_UP
+  PROJECTION
+}
+
+model Event {
+  id          String      @id @default(cuid())
+  name        String
+  slug        String      @unique
+  description String?
+  bannerUrl   String?
+  startDate   DateTime
+  endDate     DateTime
+  status      EventStatus @default(DRAFT)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  registrations    EventRegistration[]
+  mediaSubmissions MediaSubmission[]
+  testimonies      Testimony[]
+
+  @@index([status])
+  @@index([startDate])
+}
+
+model Contact {
+  id              String   @id @default(cuid())
+  firstName       String
+  lastName        String
+  phone           String
+  email           String?
+  instagramHandle String?
+  twitterHandle   String?
+  facebookHandle  String?
+  tiktokHandle    String?
+  location        String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  registrations    EventRegistration[]
+  mediaSubmissions MediaSubmission[]
+  testimonies      Testimony[]
+  followUpNotes    FollowUpNote[]
+
+  @@index([phone])
+  @@index([email])
+}
+
+model EventRegistration {
+  id                  String         @id @default(cuid())
+  eventId             String
+  contactId           String
+  firstTimeVisitor    Boolean        @default(false)
+  consentFollowUp     Boolean        @default(false)
+  consentMedia        Boolean        @default(false)
+  consentTestimony    Boolean        @default(false)
+  followUpStatus      FollowUpStatus @default(NEW)
+  assignedStaffUserId String?
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+
+  event         Event      @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  contact       Contact    @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  assignedStaff StaffUser? @relation(fields: [assignedStaffUserId], references: [id], onDelete: SetNull)
+
+  @@unique([eventId, contactId])
+  @@index([eventId])
+  @@index([contactId])
+  @@index([followUpStatus])
+  @@index([assignedStaffUserId])
+}
+
+model MediaSubmission {
+  id           String           @id @default(cuid())
+  eventId      String
+  contactId    String
+  fileKey      String
+  fileType     MediaType
+  caption      String?
+  status       SubmissionStatus @default(PENDING)
+  approvedById String?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  event      Event      @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  contact    Contact    @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  approvedBy StaffUser? @relation("MediaApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull)
+
+  @@index([eventId])
+  @@index([contactId])
+  @@index([status])
+}
+
+model Testimony {
+  id           String          @id @default(cuid())
+  eventId      String
+  contactId    String
+  title        String
+  content      String
+  status       TestimonyStatus @default(PENDING)
+  verified     Boolean         @default(false)
+  displayOrder Int?
+  approvedById String?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  event      Event      @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  contact    Contact    @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  approvedBy StaffUser? @relation("TestimonyApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull)
+
+  @@index([eventId])
+  @@index([contactId])
+  @@index([status])
+}
+
+model StaffUser {
+  id           String    @id @default(cuid())
+  name         String
+  email        String    @unique
+  passwordHash String
+  role         StaffRole
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  assignedRegistrations EventRegistration[]
+  followUpNotes         FollowUpNote[]
+  approvedMedia         MediaSubmission[]   @relation("MediaApprovedBy")
+  approvedTestimonies   Testimony[]         @relation("TestimonyApprovedBy")
+}
+
+model FollowUpNote {
+  id          String   @id @default(cuid())
+  contactId   String
+  staffUserId String
+  note        String
+  createdAt   DateTime @default(now())
+
+  contact   Contact   @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  staffUser StaffUser @relation(fields: [staffUserId], references: [id], onDelete: Cascade)
+
+  @@index([contactId])
+  @@index([staffUserId])
+  @@index([createdAt])
+}
