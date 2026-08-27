@@ -21,8 +21,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
+
     env:
       DATABASE_URL: postgresql://ci_user:ci_password@localhost:5432/jubilee_nation_ci
+      AWS_REGION: eu-west-1
+      S3_MEDIA_BUCKET: jubilee-nation-dev-media-396502420649
 
     defaults:
       run:
