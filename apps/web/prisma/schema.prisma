@@ -120,7 +120,7 @@ model MediaSubmission {
   id           String           @id @default(cuid())
   eventId      String
   contactId    String
-  fileKey      String
+  fileKey      String           @unique
   fileType     MediaType
   caption      String?
   status       SubmissionStatus @default(PENDING)

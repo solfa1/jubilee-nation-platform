@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
@@ -22,10 +23,16 @@ type RegistrationFormProps = {
   eventSlug: string;
 };
 
+type RegistrationResponse = {
+  message: string;
+  registrationId: string;
+  contactId: string;
+};
+
 export function RegistrationForm({
   eventSlug,
 }: RegistrationFormProps) {
-  const [submitted, setSubmitted] = useState(false);
+  const router = useRouter();
   const [serverError, setServerError] = useState<string | null>(null);
 
   const {
@@ -64,15 +71,23 @@ export function RegistrationForm({
         body: JSON.stringify(data),
       });
 
-      if (!response.ok) {
-        const body = await response.json();
+      const body = (await response.json()) as
+        | RegistrationResponse
+        | { error?: string };
 
+      if (!response.ok) {
         throw new Error(
-          body.error ?? "Unable to complete registration"
+          "error" in body && body.error
+            ? body.error
+            : "Unable to complete registration"
         );
       }
 
-      setSubmitted(true);
+      if (!("registrationId" in body)) {
+        throw new Error("Registration ID was not returned");
+      }
+
+      router.push(`/upload/${body.registrationId}`);
     } catch (error) {
       setServerError(
         error instanceof Error
@@ -80,27 +95,6 @@ export function RegistrationForm({
           : "Unable to complete registration"
       );
     }
-  }
-
-  if (submitted) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Registration complete</CardTitle>
-
-          <CardDescription>
-            Thank you for connecting with Jubilee Nation.
-          </CardDescription>
-        </CardHeader>
-
-        <CardContent>
-          <p className="text-sm text-muted-foreground">
-            You can now continue to share your experience, photos,
-            videos, or testimony.
-          </p>
-        </CardContent>
-      </Card>
-    );
   }
 
   return (
