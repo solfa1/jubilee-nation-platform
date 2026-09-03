@@ -23,6 +23,23 @@ const ALLOWED_TYPES = [
   "video/webm",
 ];
 
+async function calculateFileHash(file: File) {
+  const buffer = await file.arrayBuffer();
+
+  const hashBuffer = await crypto.subtle.digest(
+    "SHA-256",
+    buffer
+  );
+
+  const hashArray = Array.from(
+    new Uint8Array(hashBuffer)
+  );
+
+  return hashArray
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+}
+
 export function MediaUploadForm({
   registrationId,
 }: MediaUploadFormProps) {
@@ -71,6 +88,11 @@ export function MediaUploadForm({
 
     try {
       setStatus("uploading");
+
+      setMessage("Checking media...");
+
+      const fileHash = await calculateFileHash(file);
+
       setMessage("Preparing upload...");
 
       const presignResponse = await fetch("/api/media/presign", {
@@ -127,6 +149,7 @@ export function MediaUploadForm({
             registrationId,
             objectKey: presignData.objectKey,
             contentType: file.type,
+            fileHash,
             caption: caption.trim() || undefined,
           }),
         }

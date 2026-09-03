@@ -12,7 +12,12 @@ export const mediaSubmissionSchema = z.object({
     "video/quicktime",
     "video/webm",
   ]),
+   
+  fileHash: z
+  .string()
+  .regex(/^[a-f0-9]{64}$/, "Invalid file hash"),
 
+  
   caption: z.string().trim().max(500).optional(),
 });
 

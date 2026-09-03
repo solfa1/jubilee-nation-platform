@@ -121,6 +121,7 @@ model MediaSubmission {
   eventId      String
   contactId    String
   fileKey      String           @unique
+  fileHash String
   fileType     MediaType
   caption      String?
   status       SubmissionStatus @default(PENDING)
@@ -132,6 +133,7 @@ model MediaSubmission {
   contact    Contact    @relation(fields: [contactId], references: [id], onDelete: Cascade)
   approvedBy StaffUser? @relation("MediaApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull)
 
+  @@unique([eventId, contactId, fileHash])
   @@index([eventId])
   @@index([contactId])
   @@index([status])

@@ -34,11 +34,12 @@ export async function POST(request: Request) {
     }
 
     const {
-      registrationId,
-      objectKey,
-      contentType,
-      caption,
-    } = parsed.data;
+     registrationId,
+     objectKey,
+     contentType,
+     fileHash,
+     caption,
+   } = parsed.data;
 
     const registration =
       await prisma.eventRegistration.findUnique({
@@ -118,11 +119,32 @@ export async function POST(request: Request) {
       );
     }
 
+    const existingSubmission =
+  await prisma.mediaSubmission.findFirst({
+    where: {
+      eventId: registration.event.id,
+      contactId: registration.contactId,
+      fileHash,
+    },
+    select: {
+      id: true,
+    },
+  });
+
+if (existingSubmission) {
+  return NextResponse.json(
+    {
+      error: "You have already submitted this media.",
+    },
+    { status: 409 }
+  );
+}
     const submission = await prisma.mediaSubmission.create({
       data: {
         eventId: registration.event.id,
         contactId: registration.contactId,
         fileKey: objectKey,
+        fileHash,
         fileType: isImage ? "IMAGE" : "VIDEO",
         caption: caption || null,
       },
