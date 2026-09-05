@@ -77,7 +77,7 @@ export function RegistrationLookupForm({
         throw new Error("Registration ID was not returned");
       }
 
-      router.push(`/upload/${body.registrationId}`);
+      router.push(`/dashboard/${body.registrationId}`);
     } catch (error) {
       setError(
         error instanceof Error
